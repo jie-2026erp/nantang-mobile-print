@@ -16,6 +16,8 @@ h2{text-align:center;padding:10px;font-size:18px}
 .st1{background:#e8f5e9;color:#2e7d32}
 button{background:#4CAF50;color:#fff;border:none;padding:10px 16px;border-radius:6px;font-size:14px;width:100%;margin-top:8px}
 button:disabled{background:#aaa}
+button.ok{background:#2e7d32}
+button.err{background:#c62828}
 .loading{text-align:center;padding:20px;color:#666}
 .refresh{text-align:center;margin-bottom:10px}
 .refresh button{background:#2196F3;padding:6px 16px;font-size:13px;width:auto}
@@ -67,8 +69,8 @@ let check=setInterval(async()=>{
 let r=await fetch('https://raw.githubusercontent.com/'+REPO+'/main/tasks.json?_t='+Date.now());
 let t=await r.json();
 let task=t.find(x=>x.id==id);
-if(task&&task.status==='done'){clearInterval(check);btn.textContent='已打印';setTimeout(loadList,2000)}
-if(task&&task.status==='error'){clearInterval(check);btn.textContent='打印失败';btn.disabled=false}
+if(task&&task.status==='done'){clearInterval(check);btn.textContent='✓ 打印成功';btn.classList.add('ok');setTimeout(loadList,3000)}
+if(task&&task.status==='error'){clearInterval(check);btn.textContent='✗ 打印失败:'+(task.msg||'');btn.classList.add('err');btn.disabled=false}
 },2000);
 }catch(e){btn.textContent='错误: '+e;btn.disabled=false}
 }
