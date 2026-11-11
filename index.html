@@ -24,12 +24,13 @@ button.err{background:#c62828}
 .time{text-align:center;font-size:11px;color:#999;margin-bottom:8px}
 </style></head><body>
 <h2>金华2仓提货单打印</h2>
-<div class="refresh"><button onclick="loadList(true)">刷新列表</button></div>
-<div class="time" id="time"></div>
+<div class="refresh"><button onclick="loadList()">刷新列表</button></div>
+<div class="time" id="time">更新于 2026-11-11 08:14</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
 const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
+const ITEMS=[];
 
 function render(items){
 if(!items||!items.length){document.getElementById('list').innerHTML='<div class="loading">今天暂无提货单</div>';return}
@@ -51,23 +52,14 @@ html+=`<div class="item"><div class="row1"><div class="code">${it.batch_code}</d
 document.getElementById('list').innerHTML=html;
 }
 
-async function loadList(manual){
-// 先显示本地缓存
-try{
-let cache=localStorage.getItem('picklist_cache');
-if(cache){let c=JSON.parse(cache);render(c.list);document.getElementById('time').textContent='更新于 '+c.time}
-else if(!manual){document.getElementById('list').innerHTML='<div class="loading">加载中...</div>'}
-}catch(e){}
+async function loadList(){
 try{
 let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/data.json',{headers:{'User-Agent':'print-app'}});
 let j=await r.json();
 let d=JSON.parse(atob(j.content));
-localStorage.setItem('picklist_cache',JSON.stringify(d));
 render(d.list||[]);
 document.getElementById('time').textContent='更新于 '+(d.time||'');
-}catch(e){
-if(!localStorage.getItem('picklist_cache')){document.getElementById('list').innerHTML='<div class="loading">加载失败:'+e+'</div>'}
-}
+}catch(e){}
 }
 
 async function doPrint(id,code){
@@ -91,5 +83,5 @@ if(task&&task.status==='error'){clearInterval(check);btn.textContent='✗ 打印
 },2000);
 }catch(e){btn.textContent='错误: '+e;btn.disabled=false}
 }
-loadList(false);
+render(ITEMS);
 </script></body></html>
