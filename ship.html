@@ -23,10 +23,13 @@ button.err{background:#c62828}
 .refresh{text-align:center;margin-bottom:10px}
 .refresh button{background:#2196F3;padding:6px 16px;font-size:13px;width:auto}
 .time{text-align:center;font-size:11px;color:#999;margin-bottom:8px}
+.nav{margin-bottom:10px;text-align:center}
+.nav a{display:inline-block;background:#673AB7;color:#fff;text-decoration:none;padding:10px 16px;border-radius:6px;font-size:14px}
 </style></head><body>
 <h2>金华2仓 货件标签打印</h2>
+<div class="nav"><a href="index.html">← 提货单打印</a></div>
 <div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-11 11:45</div>
+<div class="time" id="time">更新于 2026-11-11 11:46</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
@@ -64,14 +67,14 @@ document.getElementById('time').textContent='更新于 '+(d.time||'');
 }catch(e){}
 }
 
-async function doPrint(id,code){
+async function doPrint(id,code,platform,boxes){
 let btn=document.getElementById('btn_'+id);
 btn.disabled=true;btn.textContent='正在提交...';
 try{
 let tr=await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{headers:{'User-Agent':'print-app'}});
 let tf=await tr.json();
 let content=JSON.parse(atob(tf.content));
-content.push({id:id,code:code,time:new Date().toISOString(),status:'pending'});
+content.push({id:id,code:code,platform:platform,boxes:boxes,time:new Date().toISOString(),status:'pending'});
 let body={message:'print '+code,content:btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2)))),sha:tf.sha};
 await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'User-Agent':'print-app','Content-Type':'application/json'},body:JSON.stringify(body)});
 btn.textContent='已提交，等待打印...';
