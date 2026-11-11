@@ -28,7 +28,7 @@ button.err{background:#c62828}
 <h2>金华2仓提货单打印</h2>
 <div class="nav"><a href="ship.html">📦 货件标签打印 →</a></div>
 <div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-11 17:45</div>
+<div class="time" id="time">更新于 2026-11-11 17:46</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
@@ -102,12 +102,13 @@ async function doPrint(id,code){
 let btn=document.getElementById('btn_'+id);
 btn.disabled=true;btn.textContent='正在提交...';
 try{
-await enqueue(()=>submitTask(id,code));
+let res=await enqueue(()=>submitTask(id,code));
+if(res&&res.dup){btn.textContent='该单正在排队，请勿重复点击';btn.disabled=false;return;}
 btn.textContent='已提交，等待打印...';
 let check=setInterval(async()=>{
 try{
 let {content}=await readTasks();
-let task=content.find(x=>x.id==id);
+let task=content.filter(x=>x.id==id).pop();
 if(task&&task.status==='done'){clearInterval(check);btn.textContent='✓ 打印成功';btn.classList.add('ok');setTimeout(loadList,3000)}
 if(task&&task.status==='error'){clearInterval(check);btn.textContent='✗ 打印失败:'+(task.msg||'');btn.classList.add('err');btn.disabled=false}
 }catch(e){}
