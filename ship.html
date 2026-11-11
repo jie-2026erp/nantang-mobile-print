@@ -26,7 +26,7 @@ button.err{background:#c62828}
 </style></head><body>
 <h2>金华2仓 货件标签打印</h2>
 <div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-11 11:43</div>
+<div class="time" id="time">更新于 2026-11-11 11:45</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
@@ -48,7 +48,7 @@ html+=`<div class="item"><div class="row1"><div class="code">${it.code}</div>${p
 <div>店铺<br><b>${(it.shop||'-')}</b></div>
 <div>站点<br><b>${it.site||'-'}</b></div>
 </div>${err}
-<button id="btn_${it.id}" onclick="doPrint(${it.id},'${it.code}')">打印箱子标签</button>
+<button id="btn_${it.id}" onclick="doPrint(${it.id},'${it.code}','${it.platform}',${it.boxes||0})">打印箱子标签</button>
 </div>`;
 });
 document.getElementById('list').innerHTML=html;
