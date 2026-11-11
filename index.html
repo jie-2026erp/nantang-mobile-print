@@ -21,21 +21,18 @@ button.err{background:#c62828}
 .loading{text-align:center;padding:20px;color:#666}
 .refresh{text-align:center;margin-bottom:10px}
 .refresh button{background:#2196F3;padding:6px 16px;font-size:13px;width:auto}
+.time{text-align:center;font-size:11px;color:#999;margin-bottom:8px}
 </style></head><body>
 <h2>金华2仓提货单打印</h2>
-<div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div id="list" class="loading">加载中...</div>
+<div class="refresh"><button onclick="loadList(true)">刷新列表</button></div>
+<div class="time" id="time"></div>
+<div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
 const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
-async function loadList(){
-document.getElementById('list').innerHTML='<div class="loading">加载中...</div>';
-try{
-let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/data.json',{headers:{'User-Agent':'print-app'}});
-let j=await r.json();
-let d=JSON.parse(atob(j.content));
-let items=d.list||[];
-if(!items.length){document.getElementById('list').innerHTML='<div class="loading">今天暂无提货单</div>';return}
+
+function render(items){
+if(!items||!items.length){document.getElementById('list').innerHTML='<div class="loading">今天暂无提货单</div>';return}
 let html='';
 items.forEach(it=>{
 let ps=it.print_status==1?'<span class="status st1">已打印</span>':'<span class="status st0">未打印</span>';
@@ -52,13 +49,31 @@ html+=`<div class="item"><div class="row1"><div class="code">${it.batch_code}</d
 </div>`;
 });
 document.getElementById('list').innerHTML=html;
-}catch(e){document.getElementById('list').innerHTML='<div class="loading">加载失败:'+e+'</div>'}
 }
+
+async function loadList(manual){
+// 先显示本地缓存
+try{
+let cache=localStorage.getItem('picklist_cache');
+if(cache){let c=JSON.parse(cache);render(c.list);document.getElementById('time').textContent='更新于 '+c.time}
+else if(!manual){document.getElementById('list').innerHTML='<div class="loading">加载中...</div>'}
+}catch(e){}
+try{
+let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/data.json',{headers:{'User-Agent':'print-app'}});
+let j=await r.json();
+let d=JSON.parse(atob(j.content));
+localStorage.setItem('picklist_cache',JSON.stringify(d));
+render(d.list||[]);
+document.getElementById('time').textContent='更新于 '+(d.time||'');
+}catch(e){
+if(!localStorage.getItem('picklist_cache')){document.getElementById('list').innerHTML='<div class="loading">加载失败:'+e+'</div>'}
+}
+}
+
 async function doPrint(id,code){
 let btn=document.getElementById('btn_'+id);
 btn.disabled=true;btn.textContent='正在打印...';
 try{
-// 读取tasks.json，追加新任务
 let tr=await fetch('https://api.github.com/repos/'+REPO+'/contents/tasks.json',{headers:{'User-Agent':'print-app'}});
 let tf=await tr.json();
 let content=JSON.parse(atob(tf.content));
@@ -76,5 +91,5 @@ if(task&&task.status==='error'){clearInterval(check);btn.textContent='✗ 打印
 },2000);
 }catch(e){btn.textContent='错误: '+e;btn.disabled=false}
 }
-loadList();
+loadList(false);
 </script></body></html>
