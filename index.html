@@ -31,8 +31,9 @@ const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
 async function loadList(){
 document.getElementById('list').innerHTML='<div class="loading">加载中...</div>';
 try{
-let r=await fetch('https://raw.githubusercontent.com/'+REPO+'/main/data.json?_t='+Date.now());
-let d=await r.json();
+let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/data.json',{headers:{'User-Agent':'print-app'}});
+let j=await r.json();
+let d=JSON.parse(atob(j.content));
 let items=d.list||[];
 if(!items.length){document.getElementById('list').innerHTML='<div class="loading">今天暂无提货单</div>';return}
 let html='';
@@ -66,8 +67,9 @@ let body={message:'print '+code,content:btoa(unescape(encodeURIComponent(JSON.st
 await fetch('https://api.github.com/repos/'+REPO+'/contents/tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'User-Agent':'print-app','Content-Type':'application/json'},body:JSON.stringify(body)});
 btn.textContent='已提交，等待打印...';
 let check=setInterval(async()=>{
-let r=await fetch('https://raw.githubusercontent.com/'+REPO+'/main/tasks.json?_t='+Date.now());
-let t=await r.json();
+let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/tasks.json',{headers:{'User-Agent':'print-app'}});
+let j=await r.json();
+let t=JSON.parse(atob(j.content));
 let task=t.find(x=>x.id==id);
 if(task&&task.status==='done'){clearInterval(check);btn.textContent='✓ 打印成功';btn.classList.add('ok');setTimeout(loadList,3000)}
 if(task&&task.status==='error'){clearInterval(check);btn.textContent='✗ 打印失败:'+(task.msg||'');btn.classList.add('err');btn.disabled=false}
