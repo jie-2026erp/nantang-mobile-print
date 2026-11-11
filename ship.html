@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>货件标签打印</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,sans-serif;background:#f5f5f5;padding:10px}
+h2{text-align:center;padding:10px;font-size:18px}
+.item{background:#fff;border-radius:8px;padding:12px;margin-bottom:8px}
+.item .row1{display:flex;justify-content:space-between;align-items:center}
+.item .code{font-size:16px;font-weight:bold}
+.item .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px;font-size:12px;color:#555}
+.item .grid div{background:#f9f9f9;padding:4px 6px;border-radius:4px}
+.item .grid b{color:#333}
+.item .status{font-size:11px;padding:2px 8px;border-radius:10px;display:inline-block}
+.st0{background:#fff3e0;color:#e65100}
+.st1{background:#e8f5e9;color:#2e7d32}
+.err{color:#c62822;font-size:11px;margin-top:6px}
+button{background:#4CAF50;color:#fff;border:none;padding:10px 16px;border-radius:6px;font-size:14px;width:100%;margin-top:8px}
+button:disabled{background:#aaa}
+button.ok{background:#2e7d32}
+button.err{background:#c62828}
+.loading{text-align:center;padding:20px;color:#666}
+.refresh{text-align:center;margin-bottom:10px}
+.refresh button{background:#2196F3;padding:6px 16px;font-size:13px;width:auto}
+.time{text-align:center;font-size:11px;color:#999;margin-bottom:8px}
+</style></head><body>
+<h2>金华2仓 货件标签打印</h2>
+<div class="refresh"><button onclick="loadList()">刷新列表</button></div>
+<div class="time" id="time">更新于 2026-11-11 11:22</div>
+<div id="list"></div>
+<script>
+const REPO="jie-2026erp/nantang-mobile-print";
+const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
+const ITEMS=[{"id": 1207299, "code": "HWC261110022", "platform": "Cdiscount", "platformText": "Cdiscount", "shop": "法国CD普米欧盟本土站-FR", "space": "JH11-0929", "boxes": 3, "weight": "42.55", "volume": "38.15", "status": "未打印", "err": "", "site": "FR"}];
+
+function render(items){
+if(!items||!items.length){document.getElementById('list').innerHTML='<div class="loading">暂无可打印货件标签</div>';return}
+let html='';
+items.forEach(it=>{
+let ps=it.status==='已打印'?'<span class="status st1">已打印</span>':'<span class="status st0">未打印</span>';
+let err=it.err?`<div class="err">异常: ${it.err}</div>`:'';
+html+=`<div class="item"><div class="row1"><div class="code">${it.code}</div>${ps}</div>
+<div class="grid">
+<div>平台<br><b>${it.platformText||it.platform||'-'}</b></div>
+<div>库位<br><b>${it.space||'-'}</b></div>
+<div>箱数<br><b>${it.boxes||'-'}</b></div>
+<div>毛重<br><b>${it.weight||'-'}</b></div>
+<div>店铺<br><b>${(it.shop||'-')}</b></div>
+<div>站点<br><b>${it.site||'-'}</b></div>
+</div>${err}
+<button id="btn_${it.id}" onclick="doPrint(${it.id},'${it.code}')">打印箱子标签</button>
+</div>`;
+});
+document.getElementById('list').innerHTML=html;
+}
+
+async function loadList(){
+try{
+let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_data.json',{headers:{'User-Agent':'print-app'}});
+let j=await r.json();
+let d=JSON.parse(atob(j.content));
+render(d.list||[]);
+document.getElementById('time').textContent='更新于 '+(d.time||'');
+}catch(e){}
+}
+
+async function doPrint(id,code){
+let btn=document.getElementById('btn_'+id);
+btn.disabled=true;btn.textContent='正在提交...';
+try{
+let tr=await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{headers:{'User-Agent':'print-app'}});
+let tf=await tr.json();
+let content=JSON.parse(atob(tf.content));
+content.push({id:id,code:code,time:new Date().toISOString(),status:'pending'});
+let body={message:'print '+code,content:btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2)))),sha:tf.sha};
+await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'User-Agent':'print-app','Content-Type':'application/json'},body:JSON.stringify(body)});
+btn.textContent='已提交，等待打印...';
+let check=setInterval(async()=>{
+let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{headers:{'User-Agent':'print-app'}});
+let j=await r.json();
+let t=JSON.parse(atob(j.content));
+let task=t.find(x=>x.id==id);
+if(task&&task.status==='done'){clearInterval(check);btn.textContent='✓ 打印成功';btn.classList.add('ok');setTimeout(loadList,3000)}
+if(task&&task.status==='error'){clearInterval(check);btn.textContent='✗ 打印失败:'+(task.msg||'');btn.classList.add('err');btn.disabled=false}
+},2000);
+}catch(e){btn.textContent='错误: '+e;btn.disabled=false}
+}
+render(ITEMS);
+</script></body></html>
