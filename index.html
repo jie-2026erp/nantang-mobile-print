@@ -18,6 +18,9 @@ button{background:#4CAF50;color:#fff;border:none;padding:10px 16px;border-radius
 button:disabled{background:#aaa}
 button.ok{background:#2e7d32}
 button.err{background:#c62828}
+.btn-row{display:flex;gap:8px;margin-top:8px}
+.btn-row button{width:auto;flex:1;margin-top:0}
+button.up{background:#2196F3}
 .loading{text-align:center;padding:20px;color:#666}
 .refresh{text-align:center;margin-bottom:10px}
 .refresh button{background:#2196F3;padding:6px 16px;font-size:13px;width:auto}
@@ -26,17 +29,25 @@ button.err{background:#c62828}
 .nav a{display:inline-block;background:#673AB7;color:#fff;text-decoration:none;padding:10px 16px;border-radius:6px;font-size:14px}
 </style></head><body>
 <h2>金华2仓提货单打印</h2>
+<div class="time">仅列出未上传附件的提货单</div>
 <div class="nav"><a href="ship.html">📦 货件标签打印 →</a></div>
 <div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-12 10:31</div>
+<div class="time" id="time">更新于 2026-11-12 10:32</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
 const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
+let STAFF_ID="__STAFF_ID__";
+let STAFF_NAME="__STAFF_NAME__";
 const ITEMS=[];
 
+function h5Url(code){
+return 'http://h5.fba.nantang-tech.com//?id="'+STAFF_ID+'"&userName='+encodeURIComponent(STAFF_NAME)+'&batch_code='+encodeURIComponent(code)+'#/deliverymanagement';
+}
+function openUpload(code){window.location.href=h5Url(code);}
+
 function render(items){
-if(!items||!items.length){document.getElementById('list').innerHTML='<div class="loading">今天暂无提货单</div>';return}
+if(!items||!items.length){document.getElementById('list').innerHTML='<div class="loading">暂无需上传附件的提货单</div>';return}
 let html='';
 items.forEach(it=>{
 let ps=it.print_status==1?'<span class="status st1">已打印</span>':'<span class="status st0">未打印</span>';
@@ -50,7 +61,10 @@ html+=`<div class="item"><div class="row1"><div class="code">${it.batch_code}</d
 <div>状态<br><b>${it.status_name||'-'}</b></div>
 <div>收货人<br><b>${it.is_write||'-'}</b></div>
 </div>
+<div class="btn-row">
 <button id="btn_${it.id}" onclick="doPrint(${it.id},'${it.batch_code}')">打印</button>
+<button class="up" onclick="openUpload('${it.batch_code}')">上传附件</button>
+</div>
 </div>`;
 });
 document.getElementById('list').innerHTML=html;
@@ -60,6 +74,8 @@ async function loadList(){
 try{
 let r=await fetch('https://jie-2026erp.github.io/nantang-mobile-print/data.json?t='+Date.now());
 let d=await r.json();
+if(d.staffId) STAFF_ID=d.staffId;
+if(d.staffName) STAFF_NAME=d.staffName;
 render(d.list||[]);
 document.getElementById('time').textContent='更新于 '+(d.time||'');
 }catch(e){document.getElementById('time').textContent='刷新失败，请点重试'}
