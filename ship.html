@@ -29,12 +29,12 @@ button.err{background:#c62828}
 <h2>金华2仓 货件标签打印</h2>
 <div class="nav"><a href="index.html">← 提货单打印</a></div>
 <div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-12 13:24</div>
+<div class="time" id="time">更新于 2026-11-12 13:25</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
 const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
-const ITEMS=[{"id": 1207210, "code": "FBA15MW48VFY", "platform": "FBA", "platformText": "FBA", "shop": "亚马逊羽金欧洲站-DE", "space": "FH-3-84", "boxes": 4, "weight": "69.2", "volume": "69.58", "status": "未打印", "err": "货件收件地址异常!", "site": "DE"}];
+const ITEMS=[];
 
 function render(items){
 if(!items||!items.length){document.getElementById('list').innerHTML='<div class="loading">暂无可打印货件标签</div>';return}
