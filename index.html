@@ -32,14 +32,14 @@ button.up{background:#2196F3}
 <div class="time">仅列出未上传附件的提货单</div>
 <div class="nav"><a href="ship.html">📦 货件标签打印 →</a></div>
 <div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-13 13:01</div>
+<div class="time" id="time">更新于 2026-11-13 13:02</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
 const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
 let STAFF_ID="01296965214729277422";
 let STAFF_NAME="王梦吉";
-const ITEMS=[{"id": 38881, "batch_code": "TH26111200316", "create_name": "李晶晶", "datetime": "2026-11-12 17:26:18", "transport_name": "卡航", "provider_name": "美通", "sum_box": "75", "sum_pcs": 432, "sum_bulk": "8.0346", "inbound_count": 10, "status": 2, "print_status": 0, "status_name": "已标记", "attachment": [], "end_time": "2026-11-13 11:08:24", "warehouse_name": "FBA中转仓-金华2仓", "is_write": "已填写", "delivery_method": "货代", "export_label": "未导出", "is_upload_attachment": "未上传"}];
+const ITEMS=[{"id": 38881, "batch_code": "TH26111200316", "create_name": "李晶晶", "datetime": "2026-11-12 17:26:18", "transport_name": "卡航", "provider_name": "美通", "sum_box": "75", "sum_pcs": 432, "sum_bulk": "8.0346", "inbound_count": 10, "status": 2, "print_status": 1, "status_name": "已标记", "attachment": [], "end_time": "2026-11-13 11:08:24", "warehouse_name": "FBA中转仓-金华2仓", "is_write": "已填写", "delivery_method": "货代", "export_label": "未导出", "is_upload_attachment": "未上传"}];
 
 function h5Url(code){
 return 'http://h5.fba.nantang-tech.com//?id="'+STAFF_ID+'"&userName='+encodeURIComponent(STAFF_NAME)+'&batch_code='+encodeURIComponent(code)+'#/deliverymanagement';
