@@ -32,14 +32,14 @@ button.up{background:#2196F3}
 <div class="time">仅列出未上传附件的提货单</div>
 <div class="nav"><a href="ship.html">📦 货件标签</a><a href="voucher2.html">📋 交接凭证</a></div>
 <div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-13 15:43</div>
+<div class="time" id="time">更新于 2026-11-13 15:44</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
 const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
 let STAFF_ID="01296965214729277422";
 let STAFF_NAME="王梦吉";
-const ITEMS=[];
+const ITEMS=[{"id": 38887, "batch_code": "TH26111300304", "create_name": "李晶晶", "datetime": "2026-11-13 15:43:54", "transport_name": "海运", "provider_name": "路易通", "sum_box": "41", "sum_pcs": 1128, "sum_bulk": "4.3674", "inbound_count": 10, "status": 0, "print_status": 0, "status_name": "未标记", "attachment": [], "end_time": "", "warehouse_name": "FBA中转仓-金华2仓", "is_write": "未填写", "delivery_method": "", "export_label": "已导出", "is_upload_attachment": "未上传"}];
 
 function h5Url(code){
 return 'http://h5.fba.nantang-tech.com//?id="'+STAFF_ID+'"&userName='+encodeURIComponent(STAFF_NAME)+'&batch_code='+encodeURIComponent(code)+'#/deliverymanagement';
