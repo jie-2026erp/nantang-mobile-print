@@ -29,12 +29,12 @@ button.err{background:#c62828}
 <h2>金华2仓 货件标签打印</h2>
 <div class="nav"><a href="index.html">← 提货单打印</a></div>
 <div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-13 08:38</div>
+<div class="time" id="time">更新于 2026-11-13 10:35</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
 const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
-const ITEMS=[];
+const ITEMS=[{"id": 1207736, "code": "HWC261110018", "platform": "NEWOUDA", "platformText": "新欧达", "shop": "Shopify135店-monportlaser.de", "space": "JH11-0595", "boxes": 3, "weight": "39.55", "volume": "52.01", "status": "未打印", "err": "", "site": "DE"}];
 
 function render(items){
 if(!items||!items.length){document.getElementById('list').innerHTML='<div class="loading">暂无可打印货件标签</div>';return}
