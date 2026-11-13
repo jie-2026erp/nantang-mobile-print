@@ -34,7 +34,7 @@ button.up{background:#673AB7}
 <a href="ship.html">货件标签</a>
 </div>
 <div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-13 14:56</div>
+<div class="time" id="time">更新于 2026-11-13 14:57</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
@@ -118,7 +118,7 @@ setTimeout(()=>{clearInterval(check);if(!btn.classList.contains('ok')){btn.textC
 
 async function loadList(){
 try{
-let r=await fetch('https://jie-2026erp.github.io/nantang-mobile-print/voucher_data.json?t='+Date.now());
+let r=await fetch('https://jie-2026erp.github.io/nantang-mobile-print/voucher_data2.json?t='+Date.now());
 let d=await r.json();
 if(d.staffId) STAFF_ID=d.staffId;
 if(d.staffName) STAFF_NAME=d.staffName;
