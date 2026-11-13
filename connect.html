@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>扫码确认交接</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,sans-serif;background:#f5f5f5;padding:10px}
+h2{text-align:center;padding:10px;font-size:18px}
+.nav{margin-bottom:10px;text-align:center}
+.nav a{display:inline-block;background:#673AB7;color:#fff;text-decoration:none;padding:10px 14px;border-radius:6px;font-size:14px;margin:0 4px}
+.time{text-align:center;font-size:11px;color:#999;margin-bottom:8px}
+.box{background:#fff;border-radius:8px;padding:12px;margin-bottom:8px}
+.scan-input{width:100%;padding:12px;font-size:16px;border:1px solid #ccc;border-radius:6px}
+.tip{font-size:12px;color:#888;margin-top:6px}
+.item{background:#fff;border-radius:8px;padding:12px;margin-top:10px}
+.item .code{font-size:16px;font-weight:bold}
+.item .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:8px;font-size:12px;color:#555}
+.item .grid div{background:#f9f9f9;padding:4px 6px;border-radius:4px}
+.item .grid b{color:#333}
+.warn{background:#fff3e0;color:#e65100;border-radius:6px;padding:8px;margin-top:8px;font-size:13px}
+button{background:#2196F3;color:#fff;border:none;padding:12px;border-radius:6px;font-size:15px;width:100%;margin-top:10px}
+button:disabled{background:#aaa}
+button.ok{background:#2e7d32}
+button.err{background:#c62828}
+.msg{font-size:13px;margin-top:8px;text-align:center}
+.notfound{color:#c62822;font-size:14px;text-align:center;padding:16px}
+.refresh{text-align:center;margin-bottom:10px}
+.refresh button{background:#2196F3;padding:6px 16px;font-size:13px;width:auto}
+</style></head><body>
+<h2>扫码确认交接</h2>
+<div class="nav">
+<a href="voucher2.html">交接凭证</a>
+<a href="index.html">提货单打印</a>
+</div>
+<div class="refresh"><button onclick="loadMap()">刷新列表</button></div>
+<div class="time" id="time">更新于 2026-11-13 15:31</div>
+
+<div class="box">
+<input class="scan-input" id="scan" placeholder="扫描或输入面单跟踪号" autocomplete="off"
+       oninput="onScan()" onkeydown="if(event.key==='Enter')onScan()">
+<div class="tip">扫到面单后自动匹配所属组包单；确认后整单一起交接。</div>
+</div>
+
+<div id="result"></div>
+
+<script>
+const REPO="jie-2026erp/nantang-mobile-print";
+const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
+let STAFF_ID="01296965214729277422";
+let STAFF_NAME="王梦吉";
+let MAP={};            // 跟踪号(大写) -> 组包单条目
+let CUR=null;          // 当前匹配到的条目
+let CUR_REQ=null;
+
+function norm(s){return (s||"").trim().toUpperCase();}
+
+function renderNotFound(text){
+document.getElementById('result').innerHTML='<div class="notfound">'+text+'</div>';
+}
+
+function renderItem(it, tn){
+const n=it.order_count||(it.tracks?it.tracks.length:'-');
+document.getElementById('result').innerHTML=
+'<div class="item">'+
+'<div class="row1"><div class="code">'+it.code+'</div></div>'+
+'<div class="grid">'+
+'<div>仓库<br><b>'+(it.warehouse||'-')+'</b></div>'+
+'<div>平台<br><b>'+(it.platform||'-')+'</b></div>'+
+'<div>物流商<br><b>'+(it.provider||'-')+'</b></div>'+
+'<div>订单数<br><b>'+n+'</b></div>'+
+'<div>重量kg<br><b>'+(it.weight||'-')+'</b></div>'+
+'<div>组包人<br><b>'+(it.create_name||'-')+'</b></div>'+
+'</div>'+
+'<div class="warn">该面单属于组包单 <b>'+it.code+'</b>，整单 <b>'+n+'</b> 件将一起交接（转已发货）。</div>'+
+'<button id="btnOk" onclick="doConnect()">确认交接整单</button>'+
+'<div class="msg" id="msg"></div>'+
+'</div>';
+}
+
+function onScan(){
+const v=norm(document.getElementById('scan').value);
+if(!v){document.getElementById('result').innerHTML='';CUR=null;return;}
+const it=MAP[v];
+CUR=it||null;
+if(it){renderItem(it,v);}
+else{renderNotFound('未找到该跟踪号对应的待交接组包单（可能已交接或不在两仓）');}
+}
+
+async function readTasks(){
+let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/connect_tasks.json?t='+Date.now());
+if(!r.ok) throw new Error('读取队列失败 '+r.status);
+let j=await r.json();
+return {sha:j.sha,content:JSON.parse(atob(j.content))};
+}
+
+async function submitTask(task){
+let lastErr='提交失败';
+for(let i=0;i<3;i++){
+let {sha,content}=await readTasks();
+if(!content.some(x=>x.req===task.req)){content.push(task);}
+let body={message:'connect '+task.track_num,content:btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2)))),sha:sha};
+let p=await fetch('https://api.github.com/repos/'+REPO+'/contents/connect_tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify(body)});
+if(p.ok) return;
+lastErr='提交失败 '+p.status;
+if(p.status===409){await new Promise(r=>setTimeout(r,1000));continue;}
+break;
+}
+throw new Error(lastErr);
+}
+
+async function doConnect(){
+if(!CUR) return;
+const btn=document.getElementById('btnOk');
+const msg=document.getElementById('msg');
+if(!confirm('确认交接组包单 '+CUR.code+'？整单 '+ (CUR.order_count||'-') +' 件将一起转已发货，提交后不可撤销。')) return;
+btn.disabled=true;btn.textContent='正在提交...';msg.textContent='';
+try{
+const req=Date.now()+'-'+Math.random().toString(36).slice(2,8);
+CUR_REQ=req;
+await submitTask({id:CUR.code,track_num:norm(document.getElementById('scan').value),code:CUR.code,req:req,time:new Date().toISOString(),status:'pending'});
+btn.textContent='已提交，等待交接...';
+let check=setInterval(async()=>{
+try{
+let {content:t}=await readTasks();
+let task=t.find(x=>x.req===req);
+if(task&&task.status==='done'){clearInterval(check);btn.textContent='✓ '+task.msg;btn.classList.add('ok');setTimeout(loadMap,3000);}
+if(task&&task.status==='error'){clearInterval(check);btn.textContent='✗ 交接失败';msg.textContent=task.msg||'';btn.classList.add('err');btn.disabled=false;}
+}catch(e){}
+},2000);
+setTimeout(()=>{clearInterval(check);if(!btn.classList.contains('ok')){btn.textContent='超时未完成，请看电脑端';btn.disabled=false}},120000);
+}catch(e){btn.textContent='错误: '+e;btn.disabled=false}
+}
+
+async function loadMap(){
+try{
+let r=await fetch('https://jie-2026erp.github.io/nantang-mobile-print/connect_map.json?t='+Date.now());
+let d=await r.json();
+if(d.staffId) STAFF_ID=d.staffId;
+if(d.staffName) STAFF_NAME=d.staffName;
+MAP={};
+(d.list||[]).forEach(it=>{(it.tracks||[]).forEach(tn=>{MAP[norm(tn)]=it;});});
+document.getElementById('time').textContent='更新于 '+(d.time||'');
+onScan();
+}catch(e){document.getElementById('time').textContent='刷新失败，请点重试'}
+}
+
+loadMap();
+</script></body></html>
