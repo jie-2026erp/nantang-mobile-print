@@ -25,11 +25,18 @@ button.err{background:#c62828}
 .time{text-align:center;font-size:11px;color:#999;margin-bottom:8px}
 .nav{margin-bottom:10px;text-align:center}
 .nav a{display:inline-block;background:#673AB7;color:#fff;text-decoration:none;padding:10px 16px;border-radius:6px;font-size:14px;margin:0 4px}
+.manual{background:#fff;border-radius:8px;padding:12px;margin-bottom:10px}
+.manual input{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:15px}
+.manual button{margin-top:8px}
 </style></head><body>
 <h2>金华2仓 货件标签打印</h2>
 <div class="nav"><a href="index.html">← 提货单</a><a href="voucher2.html">📋 交接凭证</a></div>
 <div class="refresh"><button onclick="loadList()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-13 19:28</div>
+<div class="manual">
+<input id="manualCode" placeholder="输入货件单号，如 HWC261112071" autocomplete="off">
+<button class="ok" id="manualBtn" onclick="doManual()">手动打印该单号</button>
+</div>
+<div class="time" id="time">更新于 2026-11-13 19:30</div>
 <div id="list"></div>
 <script>
 const REPO="jie-2026erp/nantang-mobile-print";
@@ -83,6 +90,31 @@ let j=await r.json();
 let t=JSON.parse(atob(j.content));
 let task=t.find(x=>x.id==id);
 if(task&&task.status==='done'){clearInterval(check);btn.textContent='✓ 打印成功';btn.classList.add('ok');setTimeout(loadList,3000)}
+if(task&&task.status==='error'){clearInterval(check);btn.textContent='✗ 打印失败:'+(task.msg||'');btn.classList.add('err');btn.disabled=false}
+},2000);
+}catch(e){btn.textContent='错误: '+e;btn.disabled=false}
+}
+
+async function doManual(){
+let inp=document.getElementById('manualCode');
+let code=(inp.value||'').trim();
+if(!code){alert('请输入货件单号');return}
+let btn=document.getElementById('manualBtn');
+btn.disabled=true;btn.textContent='正在提交...';
+try{
+let tr=await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{headers:{'User-Agent':'print-app'}});
+let tf=await tr.json();
+let content=JSON.parse(atob(tf.content));
+content.push({code:code,id:null,platform:'',boxes:0,manual:true,time:new Date().toISOString(),status:'pending'});
+let body={message:'manual print '+code,content:btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2)))),sha:tf.sha};
+await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'User-Agent':'print-app','Content-Type':'application/json'},body:JSON.stringify(body)});
+btn.textContent='已提交，等待打印...';
+let check=setInterval(async()=>{
+let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{headers:{'User-Agent':'print-app'}});
+let j=await r.json();
+let arr=JSON.parse(atob(j.content));
+let task=[...arr].reverse().find(x=>x.code===code);
+if(task&&task.status==='done'){clearInterval(check);btn.textContent='✓ 打印成功';btn.classList.add('ok');inp.value='';setTimeout(loadList,3000)}
 if(task&&task.status==='error'){clearInterval(check);btn.textContent='✗ 打印失败:'+(task.msg||'');btn.classList.add('err');btn.disabled=false}
 },2000);
 }catch(e){btn.textContent='错误: '+e;btn.disabled=false}
