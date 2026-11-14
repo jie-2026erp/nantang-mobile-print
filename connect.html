@@ -32,7 +32,7 @@ button.err{background:#c62828}
 <a href="index.html">提货单打印</a>
 </div>
 <div class="refresh"><button onclick="loadMap()">刷新列表</button></div>
-<div class="time" id="time">更新于 2026-11-14 14:11</div>
+<div class="time" id="time">更新于 2026-11-14 14:12</div>
 
 <div class="box">
 <input class="scan-input" id="scan" placeholder="扫描或输入面单跟踪号" autocomplete="off"
@@ -86,7 +86,7 @@ else{renderNotFound('未找到该跟踪号对应的待交接组包单（可能�
 }
 
 async function readTasks(){
-let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/connect_tasks.json?t='+Date.now());
+let r=await fetch(BROKER+'/contents/connect_tasks.json?t='+Date.now(),{headers:{'Authorization':'token '+TOKEN,'User-Agent':'print-app'}});
 if(!r.ok) throw new Error('读取队列失败 '+r.status);
 let j=await r.json();
 return {sha:j.sha,content:JSON.parse(atob(j.content))};
@@ -98,7 +98,7 @@ for(let i=0;i<3;i++){
 let {sha,content}=await readTasks();
 if(!content.some(x=>x.req===task.req)){content.push(task);}
 let body={message:'connect '+task.track_num,content:btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2)))),sha:sha};
-let p=await fetch('https://api.github.com/repos/'+REPO+'/contents/connect_tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify(body)});
+let p=await fetch(BROKER+'/contents/connect_tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify(body)});
 if(p.ok) return;
 lastErr='提交失败 '+p.status;
 if(p.status===409){await new Promise(r=>setTimeout(r,1000));continue;}
@@ -132,7 +132,7 @@ setTimeout(()=>{clearInterval(check);if(!btn.classList.contains('ok')){btn.textC
 
 async function loadMap(){
 try{
-let r=await fetch('https://jie-2026erp.github.io/nantang-mobile-print/connect_map.json?t='+Date.now());
+let r=await fetch(BROKER+'/files/connect_map.json?t='+Date.now(),{headers:{'Authorization':'token '+TOKEN,'User-Agent':'print-app'}});
 let d=await r.json();
 if(d.staffId) STAFF_ID=d.staffId;
 if(d.staffName) STAFF_NAME=d.staffName;
