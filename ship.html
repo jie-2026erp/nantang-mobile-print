@@ -36,11 +36,11 @@ button.err{background:#c62828}
 <input id="manualCode" placeholder="输入货件单号，如 HWC261112071" autocomplete="off">
 <button class="ok" id="manualBtn" onclick="doManual()">手动打印该单号</button>
 </div>
-<div class="time" id="time">更新于 2026-11-14 14:10</div>
+<div class="time" id="time">更新于 2026-11-14 14:11</div>
 <div id="list"></div>
 <script>
-const REPO="jie-2026erp/nantang-mobile-print";
-const TOKEN="ghp_"+"k45BP43dqN2YcPDrra6u1Qesn1NijV2V0XdJ";
+const BROKER="http://121.43.209.27:8000";
+const TOKEN="ntbrok_OjgZ-m0t4STAzTT-BkDaYyyT";
 const ITEMS=[];
 
 function render(items){
@@ -66,7 +66,7 @@ document.getElementById('list').innerHTML=html;
 
 async function loadList(){
 try{
-let r=await fetch('https://jie-2026erp.github.io/nantang-mobile-print/ship_data.json?t='+Date.now());
+let r=await fetch(BROKER+'/files/ship_data.json?t='+Date.now(),{headers:{'Authorization':'token '+TOKEN,'User-Agent':'print-app'}});
 let d=await r.json();
 render(d.list||[]);
 document.getElementById('time').textContent='更新于 '+(d.time||'');
@@ -77,15 +77,15 @@ async function doPrint(id,code,platform,boxes){
 let btn=document.getElementById('btn_'+id);
 btn.disabled=true;btn.textContent='正在提交...';
 try{
-let tr=await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{headers:{'User-Agent':'print-app'}});
+let tr=await fetch(BROKER+'/contents/ship_tasks.json',{headers:{'Authorization':'token '+TOKEN,'User-Agent':'print-app'}});
 let tf=await tr.json();
 let content=JSON.parse(atob(tf.content));
 content.push({id:id,code:code,platform:platform,boxes:boxes,time:new Date().toISOString(),status:'pending'});
 let body={message:'print '+code,content:btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2)))),sha:tf.sha};
-await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'User-Agent':'print-app','Content-Type':'application/json'},body:JSON.stringify(body)});
+await fetch(BROKER+'/contents/ship_tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'User-Agent':'print-app','Content-Type':'application/json'},body:JSON.stringify(body)});
 btn.textContent='已提交，等待打印...';
 let check=setInterval(async()=>{
-let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{headers:{'User-Agent':'print-app'}});
+let r=await fetch(BROKER+'/contents/ship_tasks.json',{headers:{'Authorization':'token '+TOKEN,'User-Agent':'print-app'}});
 let j=await r.json();
 let t=JSON.parse(atob(j.content));
 let task=t.find(x=>x.id==id);
@@ -102,15 +102,15 @@ if(!code){alert('请输入货件单号');return}
 let btn=document.getElementById('manualBtn');
 btn.disabled=true;btn.textContent='正在提交...';
 try{
-let tr=await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{headers:{'User-Agent':'print-app'}});
+let tr=await fetch(BROKER+'/contents/ship_tasks.json',{headers:{'Authorization':'token '+TOKEN,'User-Agent':'print-app'}});
 let tf=await tr.json();
 let content=JSON.parse(atob(tf.content));
 content.push({code:code,id:null,platform:'',boxes:0,manual:true,time:new Date().toISOString(),status:'pending'});
 let body={message:'manual print '+code,content:btoa(unescape(encodeURIComponent(JSON.stringify(content,null,2)))),sha:tf.sha};
-await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'User-Agent':'print-app','Content-Type':'application/json'},body:JSON.stringify(body)});
+await fetch(BROKER+'/contents/ship_tasks.json',{method:'PUT',headers:{Authorization:'token '+TOKEN,'User-Agent':'print-app','Content-Type':'application/json'},body:JSON.stringify(body)});
 btn.textContent='已提交，等待打印...';
 let check=setInterval(async()=>{
-let r=await fetch('https://api.github.com/repos/'+REPO+'/contents/ship_tasks.json',{headers:{'User-Agent':'print-app'}});
+let r=await fetch(BROKER+'/contents/ship_tasks.json',{headers:{'Authorization':'token '+TOKEN,'User-Agent':'print-app'}});
 let j=await r.json();
 let arr=JSON.parse(atob(j.content));
 let task=[...arr].reverse().find(x=>x.code===code);
